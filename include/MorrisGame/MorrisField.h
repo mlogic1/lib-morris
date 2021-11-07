@@ -30,6 +30,9 @@ namespace Morris
 		bool IsMarkerPartOfMill(const MorrisMarkerPtr marker) const;
 		const std::vector<std::array<MorrisMarkerPtr, 3>>& GetMills() const;
 		bool CanMarkerBeMoved(const MorrisMarkerPtr marker) const;
+		
+		int GetPlayerMarkerCountWhichFormMills(MorrisPlayer player) const;
+		int GetPlayerMarkerCountWhichDoNotFormMills(MorrisPlayer player) const;
 
 	private:
 		bool AreAdjacent(int pos1, int pos2) const;

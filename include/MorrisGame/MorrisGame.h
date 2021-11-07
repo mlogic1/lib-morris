@@ -24,6 +24,7 @@ namespace Morris
 		bool PlaceMarketAtPoint(int pos, const MorrisMarkerPtr marker);
 		bool MoveMarkerToPoint(int pos, const MorrisMarkerPtr marker);
 		bool EliminateMarker(const MorrisMarkerPtr marker);
+		bool CanMarkerBeEliminated(const MorrisMarkerPtr marker) const;
 
 	private:
 		bool CanPlayerMakeAMove(MorrisPlayer player) const;

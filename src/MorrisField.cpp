@@ -90,9 +90,6 @@ namespace Morris
 		if (!GetMarkerPosition(pos, marker))
 			return false;
 
-		if (IsMarkerPartOfMill(marker))
-			return false;
-
 		_cells[pos] = nullptr;
 		return true;
 	}
@@ -164,6 +161,40 @@ namespace Morris
 		}
 
 		return false;
+	}
+
+	int MorrisField::GetPlayerMarkerCountWhichFormMills(MorrisPlayer player) const
+	{
+		int markerThatFormMillsCount = 0;
+		for (const MorrisMarkerPtr& marker : _cells)
+		{
+			if (marker && marker->GetColor() == player)
+			{
+				if (IsMarkerPartOfMill(marker))
+				{
+					++markerThatFormMillsCount;
+				}
+			}
+		}
+
+		return markerThatFormMillsCount;
+	}
+
+	int MorrisField::GetPlayerMarkerCountWhichDoNotFormMills(MorrisPlayer player) const
+	{
+		int markerThatDoNotFormMillsCount = 0;
+		for (const MorrisMarkerPtr& marker : _cells)
+		{
+			if (marker && marker->GetColor() == player)
+			{
+				if (!IsMarkerPartOfMill(marker))
+				{
+					++markerThatDoNotFormMillsCount;
+				}
+			}
+		}
+
+		return markerThatDoNotFormMillsCount;
 	}
 
 	bool MorrisField::AreAdjacent(int pos1, int pos2) const

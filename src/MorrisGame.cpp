@@ -124,16 +124,7 @@ namespace Morris
 
 	bool MorrisGame::EliminateMarker(const MorrisMarkerPtr marker)
 	{
-		// check gamestate
-		if (_gameState != MorrisGameState::RemoveP1Marker && _gameState != MorrisGameState::RemoveP2Marker)
-			return false;
-
-		// check marker color
-		const MorrisPlayer markerColor = marker->GetColor();
-		if (_gameState == MorrisGameState::RemoveP1Marker && markerColor != MorrisPlayer::Player1)
-			return false;
-		
-		if (_gameState == MorrisGameState::RemoveP2Marker && markerColor != MorrisPlayer::Player2)
+		if (!CanMarkerBeEliminated(marker))
 			return false;
 
 		if (!_gameField.EliminateMarker(marker))
@@ -145,6 +136,43 @@ namespace Morris
 		m_morrisEventListener.OnMarkerEliminatedCallback(marker);
 		AfterMoveLogic(marker);
 		return true;
+	}
+
+	bool MorrisGame::CanMarkerBeEliminated(const MorrisMarkerPtr marker) const
+	{
+		// check gamestate
+		if (_gameState != MorrisGameState::RemoveP1Marker && _gameState != MorrisGameState::RemoveP2Marker)
+			return false;
+
+		// check marker color
+		const MorrisPlayer markerColor = marker->GetColor();
+		if (_gameState == MorrisGameState::RemoveP1Marker && markerColor != MorrisPlayer::Player1)
+			return false;
+
+		if (_gameState == MorrisGameState::RemoveP2Marker && markerColor != MorrisPlayer::Player2)
+			return false;
+
+		bool canBeEliminated = false;
+		bool isMarkerPartOfMill = _gameField.IsMarkerPartOfMill(marker);
+
+		if (!isMarkerPartOfMill)
+		{
+			canBeEliminated = true;
+		}
+		else
+		{
+			const int markersThatDontFormMillsCount = _gameField.GetPlayerMarkerCountWhichDoNotFormMills(markerColor);
+			if (markersThatDontFormMillsCount == 0) // exception is made when all player's markers form mills
+			{
+				canBeEliminated = true;
+			}
+			else
+			{
+				canBeEliminated = false;
+			}
+		}
+
+		return canBeEliminated;
 	}
 	
 	bool MorrisGame::CanPlayerMakeAMove(MorrisPlayer player) const
@@ -243,7 +271,6 @@ namespace Morris
 					{
 						_gameState = MorrisGameState::RemoveP1Marker;
 					}
-					// TODO: if all markers form mills, it's allowed to remove any marker
 				}
 				else
 				{
