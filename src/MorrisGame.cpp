@@ -5,24 +5,8 @@
 
 namespace Morris
 {
-	MorrisGame::MorrisGame()
-	{
-		ResetGame();
-	}
-
-	MorrisGame::MorrisGame(
-		std::function<void(MorrisPlayer)> playerTurnChangedCallback,
-		std::function<void(MorrisGameState, MorrisGameState)> gameStateChangedCallback,
-		std::function<void(MorrisPlayer)> playerWonCallback,
-		std::function<void(const MorrisMarkerPtr)> markerEliminatedCallback,
-		std::function<void(int, const MorrisMarkerPtr)> markerPlacedCallback,
-		std::function<void(int, const MorrisMarkerPtr)> markerMovedCallback) :
-			_playerTurnChangedCallback(playerTurnChangedCallback),
-			_gameStateChangedCallback(gameStateChangedCallback),
-			_playerWonCallback(playerWonCallback),
-			_markerEliminatedCallback(markerEliminatedCallback),
-			_markerPlacedCallback(markerPlacedCallback),
-			_markerMovedCallback(markerMovedCallback)
+	MorrisGame::MorrisGame(IMorrisEventListener& morrisEventListener) :
+		m_morrisEventListener(morrisEventListener)
 	{
 		ResetGame();
 	}
@@ -90,7 +74,7 @@ namespace Morris
 		_unplacedMarkers.erase(result);
 		_placedMarkers.push_back(marker);
 
-		TriggerCallback(_markerPlacedCallback, pos, marker);
+		m_morrisEventListener.OnMarkerPlacedCallback(pos, marker);
 		AfterMoveLogic(marker);
 		return true;
 	}
@@ -133,7 +117,7 @@ namespace Morris
 		if (!moveSuccess)
 			return false;
 
-		TriggerCallback(_markerMovedCallback, pos, marker);
+		m_morrisEventListener.OnMarkerMovedCallback(pos, marker);
 		AfterMoveLogic(marker);
 		return true;
 	}
@@ -158,7 +142,7 @@ namespace Morris
 		_eliminatedMakers.emplace_back(marker);
 		_placedMarkers.erase(std::remove(_placedMarkers.begin(), _placedMarkers.end(), marker), _placedMarkers.end());
 
-		TriggerCallback(_markerEliminatedCallback, marker);
+		m_morrisEventListener.OnMarkerEliminatedCallback(marker);
 		AfterMoveLogic(marker);
 		return true;
 	}
@@ -201,7 +185,7 @@ namespace Morris
 	void MorrisGame::ChangePlayerTurn()
 	{
 		_currentPlayerTurn = (_currentPlayerTurn == MorrisPlayer::Player1) ? MorrisPlayer::Player2 : MorrisPlayer::Player1;
-		TriggerCallback(_playerTurnChangedCallback, _currentPlayerTurn);
+		m_morrisEventListener.OnPlayerTurnChangedCallback(_currentPlayerTurn);
 	}
 
 	void MorrisGame::AfterMoveLogic(const MorrisMarkerPtr& marker)
@@ -216,14 +200,14 @@ namespace Morris
 				if (_gameField.GetMarkerCount(MorrisPlayer::Player1) < 3 && unplacedMarkersCount == 0)
 				{
 					_gameState = MorrisGameState::P2Wins;
-					TriggerCallback(_playerWonCallback, MorrisPlayer::Player2);
+					m_morrisEventListener.OnPlayerWinCallback(MorrisPlayer::Player2);
 					break;
 				}
 			
 				if (_gameField.GetMarkerCount(MorrisPlayer::Player2) < 3 && unplacedMarkersCount == 0)
 				{
 					_gameState = MorrisGameState::P1Wins;
-					TriggerCallback(_playerWonCallback, MorrisPlayer::Player1);
+					m_morrisEventListener.OnPlayerWinCallback(MorrisPlayer::Player1);
 					break;
 				}
 				
@@ -233,9 +217,8 @@ namespace Morris
 				MorrisPlayer oposingPlayer = (_currentPlayerTurn == MorrisPlayer::Player1) ? MorrisPlayer::Player2 : MorrisPlayer::Player1;
 				if (!CanPlayerMakeAMove(oposingPlayer))
 				{
-					// MorrisPlayer winningPlayer = (_currentPlayerTurn == MorrisPlayer::Player1) ? 
 					_gameState = (_currentPlayerTurn == MorrisPlayer::Player1) ? MorrisGameState::P1Wins : MorrisGameState::P2Wins;
-					TriggerCallback(_playerWonCallback, _currentPlayerTurn);
+					m_morrisEventListener.OnPlayerWinCallback(_currentPlayerTurn);
 				}
 				else
 				{
@@ -268,9 +251,8 @@ namespace Morris
 					MorrisPlayer oposingPlayer = (_currentPlayerTurn == MorrisPlayer::Player1) ? MorrisPlayer::Player2 : MorrisPlayer::Player1;
 					if (!CanPlayerMakeAMove(oposingPlayer))
 					{
-						// MorrisPlayer winningPlayer = (_currentPlayerTurn == MorrisPlayer::Player1) ? 
 						_gameState = (_currentPlayerTurn == MorrisPlayer::Player1) ? MorrisGameState::P1Wins : MorrisGameState::P2Wins;
-						TriggerCallback(_playerWonCallback, _currentPlayerTurn);
+						m_morrisEventListener.OnPlayerWinCallback(_currentPlayerTurn);
 					}
 					else
 					{
@@ -285,6 +267,6 @@ namespace Morris
 		}
 
 		if (prevGameState != _gameState)
-			TriggerCallback(_gameStateChangedCallback, prevGameState, _gameState);
+			m_morrisEventListener.OnGamestateChangedCallback(prevGameState, _gameState);
 	}
 }
