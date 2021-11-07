@@ -5,14 +5,20 @@
 
 namespace Morris
 {
-	MorrisGame::MorrisGame(IMorrisEventListener& morrisEventListener) :
-		m_morrisEventListener(morrisEventListener)
+	MorrisGame::MorrisGame()
 	{
 		ResetGame();
 	}
 
+	MorrisGame::MorrisGame(IMorrisEventListener* morrisEventListener)
+	{
+		ResetGame();
+		m_morrisEventListeners.emplace_back(morrisEventListener);
+	}
+
 	void MorrisGame::ResetGame()
 	{
+		m_morrisEventListeners.clear();
 		_eliminatedMakers.clear();
 		_unplacedMarkers.clear();
 		_placedMarkers.clear();
@@ -25,6 +31,20 @@ namespace Morris
 		_gameField = MorrisField();
 		_gameState = MorrisGameState::Playing;
 		_currentPlayerTurn = MorrisPlayer::Player1;
+	}
+
+	void MorrisGame::SubscribeToEvents(IMorrisEventListener* morrisEventListener)
+	{
+		if (std::count(m_morrisEventListeners.cbegin(), m_morrisEventListeners.cend(), morrisEventListener) > 0)
+			return;
+
+		m_morrisEventListeners.emplace_back(morrisEventListener);
+	}
+
+	void MorrisGame::UnsubscribeFromEvents(IMorrisEventListener* morrisEventListener)
+	{
+		if (std::count(m_morrisEventListeners.cbegin(), m_morrisEventListeners.cend(), morrisEventListener) > 0)
+			m_morrisEventListeners.erase(std::remove(m_morrisEventListeners.begin(), m_morrisEventListeners.end(), morrisEventListener));
 	}
 
 	MorrisGameState MorrisGame::GetGameState() const
@@ -74,7 +94,7 @@ namespace Morris
 		_unplacedMarkers.erase(result);
 		_placedMarkers.push_back(marker);
 
-		m_morrisEventListener.OnMarkerPlacedCallback(pos, marker);
+		TRIGGER_EVENT(OnMarkerPlacedCallback, pos, marker);
 		AfterMoveLogic(marker);
 		return true;
 	}
@@ -117,7 +137,7 @@ namespace Morris
 		if (!moveSuccess)
 			return false;
 
-		m_morrisEventListener.OnMarkerMovedCallback(pos, marker);
+		TRIGGER_EVENT(OnMarkerMovedCallback, pos, marker);
 		AfterMoveLogic(marker);
 		return true;
 	}
@@ -133,7 +153,7 @@ namespace Morris
 		_eliminatedMakers.emplace_back(marker);
 		_placedMarkers.erase(std::remove(_placedMarkers.begin(), _placedMarkers.end(), marker), _placedMarkers.end());
 
-		m_morrisEventListener.OnMarkerEliminatedCallback(marker);
+		TRIGGER_EVENT(OnMarkerEliminatedCallback, marker);
 		AfterMoveLogic(marker);
 		return true;
 	}
@@ -213,7 +233,7 @@ namespace Morris
 	void MorrisGame::ChangePlayerTurn()
 	{
 		_currentPlayerTurn = (_currentPlayerTurn == MorrisPlayer::Player1) ? MorrisPlayer::Player2 : MorrisPlayer::Player1;
-		m_morrisEventListener.OnPlayerTurnChangedCallback(_currentPlayerTurn);
+		TRIGGER_EVENT(OnPlayerTurnChangedCallback, _currentPlayerTurn);
 	}
 
 	void MorrisGame::AfterMoveLogic(const MorrisMarkerPtr& marker)
@@ -228,14 +248,14 @@ namespace Morris
 				if (_gameField.GetMarkerCount(MorrisPlayer::Player1) < 3 && unplacedMarkersCount == 0)
 				{
 					_gameState = MorrisGameState::P2Wins;
-					m_morrisEventListener.OnPlayerWinCallback(MorrisPlayer::Player2);
+					TRIGGER_EVENT(OnPlayerWinCallback, MorrisPlayer::Player2);
 					break;
 				}
 			
 				if (_gameField.GetMarkerCount(MorrisPlayer::Player2) < 3 && unplacedMarkersCount == 0)
 				{
 					_gameState = MorrisGameState::P1Wins;
-					m_morrisEventListener.OnPlayerWinCallback(MorrisPlayer::Player1);
+					TRIGGER_EVENT(OnPlayerWinCallback, MorrisPlayer::Player1);
 					break;
 				}
 				
@@ -246,7 +266,7 @@ namespace Morris
 				if (!CanPlayerMakeAMove(oposingPlayer))
 				{
 					_gameState = (_currentPlayerTurn == MorrisPlayer::Player1) ? MorrisGameState::P1Wins : MorrisGameState::P2Wins;
-					m_morrisEventListener.OnPlayerWinCallback(_currentPlayerTurn);
+					TRIGGER_EVENT(OnPlayerWinCallback, _currentPlayerTurn);
 				}
 				else
 				{
@@ -279,7 +299,7 @@ namespace Morris
 					if (!CanPlayerMakeAMove(oposingPlayer))
 					{
 						_gameState = (_currentPlayerTurn == MorrisPlayer::Player1) ? MorrisGameState::P1Wins : MorrisGameState::P2Wins;
-						m_morrisEventListener.OnPlayerWinCallback(_currentPlayerTurn);
+						TRIGGER_EVENT(OnPlayerWinCallback, _currentPlayerTurn);
 					}
 					else
 					{
@@ -294,6 +314,6 @@ namespace Morris
 		}
 
 		if (prevGameState != _gameState)
-			m_morrisEventListener.OnGamestateChangedCallback(prevGameState, _gameState);
+			TRIGGER_EVENT(OnGamestateChangedCallback, prevGameState, _gameState);
 	}
 }

@@ -7,15 +7,20 @@
 #include "MorrisMarker.h"
 #include <vector>
 
+// TODO: something is wrong after eliminating a marker that formed a mill.
+
 namespace Morris
 {
 	class MorrisGame
 	{
 	public:
-		MorrisGame(IMorrisEventListener& morrisEventListener);
+		MorrisGame();
+		MorrisGame(IMorrisEventListener* morrisEventListener);
 		~MorrisGame() = default;
 		void ResetGame();
 
+		void SubscribeToEvents(IMorrisEventListener* morrisEventListener);
+		void UnsubscribeFromEvents(IMorrisEventListener* morrisEventListener);
 		MorrisGameState GetGameState() const;
 		MorrisPlayer GetCurrentPlayerTurn() const;
 		const MorrisMarkerPtr GetMarkerAt(int pos) const;
@@ -41,6 +46,10 @@ namespace Morris
 		std::vector<MorrisMarkerPtr> _eliminatedMakers;
 
 	private:
-		IMorrisEventListener& m_morrisEventListener;
+		std::vector<IMorrisEventListener*> m_morrisEventListeners;
+
+	#define TRIGGER_EVENT(callbackMethodName, ...) \
+		for (IMorrisEventListener* listener : m_morrisEventListeners) \
+			listener->callbackMethodName(__VA_ARGS__);
 	};
 }
