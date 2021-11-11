@@ -1,6 +1,7 @@
 #pragma once
 
 #include "IMorrisEventListener.h"
+#include "IMorrisLogger.h"
 #include "MorrisField.h"
 #include "MorrisGameState.h"
 #include "MorrisPlayer.h"
@@ -15,7 +16,7 @@ namespace Morris
 	{
 	public:
 		MorrisGame();
-		MorrisGame(IMorrisEventListener* morrisEventListener);
+		MorrisGame(IMorrisEventListener* morrisEventListener, IMorrisLogger* logger = nullptr);
 		~MorrisGame() = default;
 		void ResetGame();
 
@@ -47,9 +48,13 @@ namespace Morris
 
 	private:
 		std::vector<IMorrisEventListener*> m_morrisEventListeners;
+		IMorrisLogger* m_morrisLogger = nullptr;
 
 	#define TRIGGER_EVENT(callbackMethodName, ...) \
 		for (IMorrisEventListener* listener : m_morrisEventListeners) \
 			listener->callbackMethodName(__VA_ARGS__);
+
+	private:
+		void LogMessage(const std::string& message);
 	};
 }

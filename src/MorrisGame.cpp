@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <cmath>
 #include <iterator>
+#include <string>
 
 namespace Morris
 {
@@ -10,10 +11,12 @@ namespace Morris
 		ResetGame();
 	}
 
-	MorrisGame::MorrisGame(IMorrisEventListener* morrisEventListener)
+	MorrisGame::MorrisGame(IMorrisEventListener* morrisEventListener, IMorrisLogger* logger)
 	{
 		ResetGame();
 		m_morrisEventListeners.emplace_back(morrisEventListener);
+		if (logger)
+			m_morrisLogger = logger;
 	}
 
 	void MorrisGame::ResetGame()
@@ -95,6 +98,7 @@ namespace Morris
 		_placedMarkers.push_back(marker);
 
 		TRIGGER_EVENT(OnMarkerPlacedCallback, pos, marker);
+		LogMessage("Marker placed on position " + std::to_string(pos));
 		AfterMoveLogic(marker);
 		return true;
 	}
@@ -138,6 +142,7 @@ namespace Morris
 			return false;
 
 		TRIGGER_EVENT(OnMarkerMovedCallback, pos, marker);
+		LogMessage("Marker moved to position " + std::to_string(pos));
 		AfterMoveLogic(marker);
 		return true;
 	}
@@ -154,6 +159,7 @@ namespace Morris
 		_placedMarkers.erase(std::remove(_placedMarkers.begin(), _placedMarkers.end(), marker), _placedMarkers.end());
 
 		TRIGGER_EVENT(OnMarkerEliminatedCallback, marker);
+		LogMessage("Marker eliminated");
 		AfterMoveLogic(marker);
 		return true;
 	}
@@ -234,6 +240,7 @@ namespace Morris
 	{
 		_currentPlayerTurn = (_currentPlayerTurn == MorrisPlayer::Player1) ? MorrisPlayer::Player2 : MorrisPlayer::Player1;
 		TRIGGER_EVENT(OnPlayerTurnChangedCallback, _currentPlayerTurn);
+		LogMessage("Player turn changed");
 	}
 
 	void MorrisGame::AfterMoveLogic(const MorrisMarkerPtr& marker)
@@ -249,6 +256,7 @@ namespace Morris
 				{
 					_gameState = MorrisGameState::P2Wins;
 					TRIGGER_EVENT(OnPlayerWinCallback, MorrisPlayer::Player2);
+					LogMessage("Player 2 wins");
 					break;
 				}
 			
@@ -256,6 +264,7 @@ namespace Morris
 				{
 					_gameState = MorrisGameState::P1Wins;
 					TRIGGER_EVENT(OnPlayerWinCallback, MorrisPlayer::Player1);
+					LogMessage("Player 1 wins");
 					break;
 				}
 				
@@ -267,6 +276,7 @@ namespace Morris
 				{
 					_gameState = (_currentPlayerTurn == MorrisPlayer::Player1) ? MorrisGameState::P1Wins : MorrisGameState::P2Wins;
 					TRIGGER_EVENT(OnPlayerWinCallback, _currentPlayerTurn);
+					LogMessage("Game over");
 				}
 				else
 				{
@@ -300,6 +310,7 @@ namespace Morris
 					{
 						_gameState = (_currentPlayerTurn == MorrisPlayer::Player1) ? MorrisGameState::P1Wins : MorrisGameState::P2Wins;
 						TRIGGER_EVENT(OnPlayerWinCallback, _currentPlayerTurn);
+						LogMessage("Game over");
 					}
 					else
 					{
@@ -314,6 +325,15 @@ namespace Morris
 		}
 
 		if (prevGameState != _gameState)
+		{
 			TRIGGER_EVENT(OnGamestateChangedCallback, prevGameState, _gameState);
+			LogMessage("Game state changed");
+		}
+	}
+	
+	void MorrisGame::LogMessage(const std::string& message)
+	{
+		if (m_morrisLogger)
+			m_morrisLogger->OnLog(message);
 	}
 }

@@ -8,6 +8,7 @@ SET (MORRIS_SRC_DIR ./src/)
 
 SET (MORRIS_HEADER_FILES 
 	${MORRIS_INCLUDE_DIR}IMorrisEventListener.h
+	${MORRIS_INCLUDE_DIR}IMorrisLogger.h
 	${MORRIS_INCLUDE_DIR}MorrisMarkerColor.h
 	${MORRIS_INCLUDE_DIR}MorrisPlayer.h
 	${MORRIS_INCLUDE_DIR}MorrisField.h
