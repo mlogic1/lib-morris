@@ -32,6 +32,7 @@ namespace Morris
 			_unplacedMarkers.emplace_back(std::make_shared<MorrisMarker>(MorrisPlayer::Player2));
 
 		_gameField = MorrisField();
+		_gameField.SetMillEventsCallbacks(std::bind(&MorrisGame::OnMillFormed, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4), std::bind(&MorrisGame::OnMillUnformed, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
 		_gameState = MorrisGameState::Playing;
 		_currentPlayerTurn = MorrisPlayer::Player1;
 	}
@@ -199,6 +200,18 @@ namespace Morris
 		}
 
 		return canBeEliminated;
+	}
+
+	void MorrisGame::OnMillFormed(int pos1, int pos2, int pos3, MorrisPlayer player)
+	{
+		LogMessage("Mill formed: " + std::to_string(pos1) + " " + std::to_string(pos2) + " " + std::to_string(pos3));
+		TRIGGER_EVENT(OnMillFormed, pos1, pos2, pos3, player);
+	}
+
+	void MorrisGame::OnMillUnformed(int pos1, int pos2, int pos3, MorrisPlayer player)
+	{
+		LogMessage("Mill unformed: " + std::to_string(pos1) + " " + std::to_string(pos2) + " " + std::to_string(pos3));
+		TRIGGER_EVENT(OnMillUnFormed, pos1, pos2, pos3, player);
 	}
 	
 	bool MorrisGame::CanPlayerMakeAMove(MorrisPlayer player) const

@@ -17,5 +17,7 @@ namespace Morris
 		virtual void OnMarkerEliminatedCallback(const MorrisMarkerPtr marker) = 0;
 		virtual void OnMarkerPlacedCallback(int pos, const MorrisMarkerPtr marker) = 0;
 		virtual void OnMarkerMovedCallback(int pos, const MorrisMarkerPtr marker) = 0;
+		virtual void OnMillFormed(int pos1, int pos2, int pos3, MorrisPlayer player) = 0;
+		virtual void OnMillUnFormed(int pos1, int pos2, int pos3, MorrisPlayer player) = 0;
 	};
 }

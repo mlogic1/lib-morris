@@ -8,8 +8,6 @@
 #include "MorrisMarker.h"
 #include <vector>
 
-// TODO: something is wrong after eliminating a marker that formed a mill.
-
 namespace Morris
 {
 	class MorrisGame
@@ -31,6 +29,8 @@ namespace Morris
 		bool MoveMarkerToPoint(int pos, const MorrisMarkerPtr marker);
 		bool EliminateMarker(const MorrisMarkerPtr marker);
 		bool CanMarkerBeEliminated(const MorrisMarkerPtr marker) const;
+		void OnMillFormed(int pos1, int pos2, int pos3, MorrisPlayer player);
+		void OnMillUnformed(int pos1, int pos2, int pos3, MorrisPlayer player);
 
 	private:
 		bool CanPlayerMakeAMove(MorrisPlayer player) const;

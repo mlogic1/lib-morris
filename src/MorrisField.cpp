@@ -9,6 +9,12 @@ namespace Morris
 
 	}
 
+	void MorrisField::SetMillEventsCallbacks(std::function<void(int, int, int, MorrisPlayer)> onMillFormedCallback, std::function<void(int, int, int, MorrisPlayer)> onMillUnormedCallback)
+	{
+		m_onMillFormedCallback = onMillFormedCallback;
+		m_onMillUnormedCallback = onMillUnormedCallback;
+	}
+
 	const std::array<MorrisMarkerPtr, 24>& MorrisField::GetField() const
 	{
 		return _cells;
@@ -89,6 +95,20 @@ namespace Morris
 		int pos;
 		if (!GetMarkerPosition(pos, marker))
 			return false;
+
+		const MorrisPlayer markerColor = marker->GetColor();
+
+		std::vector<std::array<MorrisMarkerPtr, 3>> millsToUnform;	// check if the marker was a part of a mill previously
+		for (const std::array<MorrisMarkerPtr, 3>&mill : _mills)
+		{
+			if (std::count(mill.cbegin(), mill.cend(), marker) > 0)
+			{
+				millsToUnform.emplace_back(mill);
+			}
+		}
+
+		for (const std::array<MorrisMarkerPtr, 3>&mill : millsToUnform)
+			UnformMill(mill);
 
 		_cells[pos] = nullptr;
 		return true;
@@ -206,12 +226,15 @@ namespace Morris
 	{
 		const MorrisPlayer markerColor = marker->GetColor();
 
-		// check if the marker was a part of a mill previously
+		std::vector<std::array<MorrisMarkerPtr, 3>> millsToUnform;	// check if the marker was a part of a mill previously
 		for (const std::array<MorrisMarkerPtr, 3>& mill : _mills)
 		{
-			if (IsMarkerPartOfMill(marker))
-				UnformMill(mill);
+			if (std::count(mill.cbegin(), mill.cend(), marker) > 0)
+				millsToUnform.emplace_back(mill);
 		}
+
+		for (const std::array<MorrisMarkerPtr, 3>&mill : millsToUnform)
+			UnformMill(mill);
 
 		// check if the moved marker forms a mill
 		int cpos;
@@ -232,17 +255,32 @@ namespace Morris
 			if (_cells[pos1] && _cells[pos1]->GetColor() == markerColor)
 				if (_cells[pos2] && _cells[pos2]->GetColor() == markerColor)
 					if (_cells[pos3] && _cells[pos3]->GetColor() == markerColor)
-						FormMill({_cells[pos1], _cells[pos2], _cells[pos3]});
+						FormMill({ _cells[pos1], _cells[pos2], _cells[pos3] });
 		}
 	}
 	
 	void MorrisField::FormMill(std::array<MorrisMarkerPtr, 3> line)
 	{
 		_mills.emplace_back(line);
+
+		int pos[3];
+		for (int i = 0 ; i < 3 ; ++i)
+			GetMarkerPosition(pos[i], line[i]);
+		
+		if (m_onMillFormedCallback)
+			m_onMillFormedCallback(pos[0], pos[1], pos[2], line[0]->GetColor());
 	}
 
 	void MorrisField::UnformMill(std::array<MorrisMarkerPtr, 3> mill)
 	{
 		_mills.erase(std::remove(_mills.begin(), _mills.end(), mill), _mills.end());
+
+		if (m_onMillUnormedCallback)
+		{
+			int pos[3];
+			for (int i = 0 ; i < 3 ; ++i)
+				GetMarkerPosition(pos[i], mill[i]);
+			m_onMillUnormedCallback(pos[0], pos[1], pos[2], mill[0]->GetColor());
+		}
 	}
 }

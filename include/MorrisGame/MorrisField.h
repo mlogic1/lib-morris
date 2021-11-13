@@ -2,6 +2,7 @@
 
 #include "MorrisMarker.h"
 #include <array>
+#include <functional>
 #include <set>
 #include <vector>
 
@@ -16,6 +17,8 @@ namespace Morris
 			// _cells = other._cells;
 			return *this;
 		}
+
+		void SetMillEventsCallbacks(std::function<void(int, int, int, MorrisPlayer)> onMillFormedCallback, std::function<void(int, int, int, MorrisPlayer)> onMillUnormedCallback);
 
 		const std::array<MorrisMarkerPtr, 24>& GetField() const;
 		bool GetMarkerPosition(int& pos, const MorrisMarkerPtr marker) const;
@@ -42,6 +45,9 @@ namespace Morris
 
 	private:
 		std::array<MorrisMarkerPtr, 24> _cells;
+
+		std::function<void(int, int, int, MorrisPlayer)> m_onMillFormedCallback;
+		std::function<void(int, int, int, MorrisPlayer)> m_onMillUnormedCallback;
 
 		const std::vector<std::set<int>> _adjacents =
 		{
